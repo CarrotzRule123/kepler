@@ -1,31 +1,35 @@
 from wgpu.gui.auto import WgpuCanvas, run
 import pygfx as gfx
-import imageio.v2 as imageio
 
-data = imageio.imread("earth.png")
+from planet import Planet
 
 canvas = WgpuCanvas()
 renderer = gfx.renderers.WgpuRenderer(canvas)
 scene = gfx.Scene()
 
-texture = gfx.Texture(data, dim=2, size=(1000, 500, 1))
-geometry = gfx.sphere_geometry(-5)
-material = gfx.MeshPhongMaterial()
-material.map = gfx.TextureView(texture)
-sphere = gfx.Mesh(geometry, material)
-scene.add(sphere)
+planets = [
+    Planet("Mercury", 5, (10, 0, -10), (0, 0.01, 0), scene),
+    Planet("Venus", 5, (10, 0, 10), (0, 0.01, 0), scene),
+    Planet("Earth", 5, (0, 0, 0), (0, 0.01, 0), scene),
+    Planet("Mars", 5, (-10, 0, 10), (0, 0.01, 0), scene),
+    Planet("Jupiter", 5, (-10, 0, -10), (0, 0.01, 0), scene)
+]
 
 camera = gfx.PerspectiveCamera(70, 16 / 9)
-camera.position.set(0, 0, 10)
+camera.position.set(0, 0, 30)
+
+controller = gfx.OrbitController(camera.position.clone())
+controller.add_default_event_handlers(renderer, camera)
 
 
-def animate():
-    rot = gfx.linalg.Quaternion().set_from_euler(gfx.linalg.Euler(y=0.01))
-    sphere.rotation.multiply(rot)
+def update():
+    for p in planets:
+        p.update()
+    controller.update_camera(camera)
     renderer.render(scene, camera)
     canvas.request_draw()
 
 
 if __name__ == "__main__":
-    canvas.request_draw(animate)
+    canvas.request_draw(update)
     run()
